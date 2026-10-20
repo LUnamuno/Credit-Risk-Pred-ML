@@ -73,15 +73,12 @@ pytest                              # offline, no network needed
 Score applicants with the saved pipeline:
 
 ```python
+from credit_risk.data import FEATURES, load_dataset
 from credit_risk.predict import predict_proba
 
-predict_proba({"LIMIT_BAL": 50000, "SEX": 2, "EDUCATION": 2, "MARRIAGE": 1, "AGE": 35,
-               "PAY_0": 2, "PAY_2": 2, "PAY_3": 0, "PAY_4": 0, "PAY_5": 0, "PAY_6": 0,
-               "BILL_AMT1": 20000, "BILL_AMT2": 19000, "BILL_AMT3": 18000,
-               "BILL_AMT4": 17000, "BILL_AMT5": 16000, "BILL_AMT6": 15000,
-               "PAY_AMT1": 1000, "PAY_AMT2": 1000, "PAY_AMT3": 1000,
-               "PAY_AMT4": 1000, "PAY_AMT5": 1000, "PAY_AMT6": 1000})
-# -> array([p]) with p in [0, 1]
+df = load_dataset()
+predict_proba(df[FEATURES].head(3))  # array of 3 probabilities in [0, 1]
+predict_proba(df[FEATURES].iloc[0].to_dict())  # a single applicant as a dict
 ```
 
 ## Method
