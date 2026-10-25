@@ -8,14 +8,15 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator
 
 from credit_risk.data import FEATURES
-from credit_risk.train import MODEL_PATH
+from credit_risk.decision import DecisionPolicy
+from credit_risk.train import DECISION_PATH, MODEL_PATH
 
 
-def load_pipeline(path: Path = MODEL_PATH) -> Pipeline:
-    """Load a pipeline saved by ``credit_risk.train``."""
+def load_pipeline(path: Path = MODEL_PATH) -> BaseEstimator:
+    """Load the (possibly calibrated) model saved by ``credit_risk.train``."""
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"No trained model at {path}. Run `python -m credit_risk.train`.")
@@ -24,7 +25,7 @@ def load_pipeline(path: Path = MODEL_PATH) -> Pipeline:
 
 def predict_proba(
     records: pd.DataFrame | Mapping[str, float] | Sequence[Mapping[str, float]],
-    pipeline: Pipeline | None = None,
+    pipeline: BaseEstimator | None = None,
 ) -> np.ndarray:
     """Return the probability of default (in [0, 1]) for each input row.
 
@@ -44,3 +45,8 @@ def predict_proba(
 
     pipeline = pipeline if pipeline is not None else load_pipeline()
     return pipeline.predict_proba(frame[FEATURES])[:, 1]
+
+
+def load_decision(path: Path = DECISION_PATH) -> DecisionPolicy:
+    """Load the decision threshold and cost assumptions saved by `credit_risk.train`."""
+    return DecisionPolicy.load(path)

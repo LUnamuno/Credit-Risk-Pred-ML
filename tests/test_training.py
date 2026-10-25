@@ -5,7 +5,9 @@ import json
 import numpy as np
 import pytest
 
+from credit_risk.calibration import CALIBRATION_METHODS
 from credit_risk.data import FEATURES
+from credit_risk.decision import DEFAULT_COSTS, CostAssumptions, DecisionPolicy
 from credit_risk.predict import load_pipeline, predict_proba
 from credit_risk.train import build_pipeline, compute_metrics, train
 
@@ -30,6 +32,53 @@ def test_train_saves_model_and_metrics(trained):
     assert set(report["validation"]) == {"roc_auc", "pr_auc", "brier"}
     assert 0.5 < report["validation"]["roc_auc"] <= 1.0
     assert (tmp_path / "pipeline.joblib").exists()
+
+
+def test_train_calibrates_and_saves_decision_policy(trained):
+    report, tmp_path = trained
+    assert report["calibration"]["selected"] in CALIBRATION_METHODS
+    assert set(report["calibration"]["validation"]) == set(CALIBRATION_METHODS)
+    # The selected method has the lowest validation Brier score.
+    briers = {m: v["brier"] for m, v in report["calibration"]["validation"].items()}
+    assert report["calibration"]["selected"] == min(briers, key=briers.get)
+
+    policy = DecisionPolicy.load(tmp_path / "decision.json")
+    assert policy.threshold == report["decision"]["threshold"]
+    assert policy.costs == DEFAULT_COSTS
+    assert 0 < policy.threshold < 1
+
+
+def test_train_reports_test_split_evaluation(trained):
+    report, _ = trained
+    assert set(report["test"]) == {"roc_auc", "pr_auc", "brier", "ece"}
+    assert report["decision"]["test"]["threshold"] == report["decision"]["threshold"]
+    assert set(report["decision"]["test_baselines_cost_per_applicant"]) == {
+        "approve_everyone",
+        "reject_everyone",
+        "threshold_0.5",
+    }
+    counts = report["decision"]["test"]
+    assert counts["tp"] + counts["fp"] + counts["fn"] + counts["tn"] == report["n_test"]
+
+
+def test_custom_costs_move_the_threshold(synthetic_df, tmp_path):
+    data_path = tmp_path / "data.csv"
+    synthetic_df.to_csv(data_path, index=False)
+    kwargs = {"data_path": data_path, "expected_rows": None}
+    cheap = train(
+        model_path=tmp_path / "a.joblib",
+        metrics_path=tmp_path / "a.json",
+        costs=CostAssumptions(cost_false_negative=1.5, cost_false_positive=1.0),
+        **kwargs,
+    )
+    costly = train(
+        model_path=tmp_path / "b.joblib",
+        metrics_path=tmp_path / "b.json",
+        costs=CostAssumptions(cost_false_negative=20.0, cost_false_positive=1.0),
+        **kwargs,
+    )
+    # Making defaults more expensive should never raise the threshold at which we reject.
+    assert costly["decision"]["threshold"] <= cheap["decision"]["threshold"]
 
 
 def test_training_is_reproducible(synthetic_df, tmp_path):

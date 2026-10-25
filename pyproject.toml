@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "credit-risk"
-version = "0.1.0"
+version = "0.2.0"
 description = "End-to-end credit default prediction (UCI Default of Credit Card Clients) - portfolio project."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,6 +21,11 @@ dev = [
     "pytest>=8.0",
     "ruff>=0.5",
     "build>=1.0",
+    "httpx>=0.27",
+]
+api = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
 ]
 notebook = [
     "jupyter>=1.0",

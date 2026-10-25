@@ -90,7 +90,8 @@ def split_data(
 ) -> dict[str, tuple[pd.DataFrame, pd.Series]]:
     """Stratified, reproducible train/validation/test split.
 
-    The test split is carved out first and must not be used for model selection in Sprint 1.
+    The test split is carved out first and is only for the final evaluation: it must not be used
+    to choose a model, a calibration method or a decision threshold.
     """
     X, y = df[FEATURES], df[TARGET]
     X_rest, X_test, y_rest, y_test = train_test_split(
