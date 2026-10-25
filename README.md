@@ -111,7 +111,15 @@ For reference, a model that always predicts the base rate has PR-AUC about 0.22 
 ## Roadmap
 
 1. **Sprint 1 (this):** data, baseline pipeline, metrics, tests, CI.
-2. **Sprint 2:** calibration, thresholds and cost-sensitive decisions, Random Forest and
-   HistGradientBoosting/XGBoost, sensitivity analysis without sensitive variables.
-3. **Sprint 3:** FastAPI + Pydantic service, Docker, integration tests.
-4. **Sprint 4:** drift report, model card, extended CI/CD, demo.
+2. **Sprint 2 (MVP with Logistic Regression):** calibration, thresholds and cost-sensitive
+   decisions (with explicit cost assumptions), first held-out test-set evaluation, FastAPI +
+   Pydantic service, Docker, integration tests. The MVP is complete after this sprint.
+3. **Sprint 3 (Expansion):** sensitivity analysis without sensitive variables, then Random Forest
+   and HistGradientBoosting/XGBoost compared with Logistic Regression under the same split,
+   preprocessing and metrics (including the cost metric from Sprint 2).
+4. **Sprint 4 (Polish):** drift report, model card, extended CI/CD, demo.
+
+> **IMPORTANT NOTE.** The sensitivity analysis (with vs. without `SEX`, `EDUCATION`, `MARRIAGE`
+> and `AGE`) is a priority and must be done **first in Sprint 3, before comparing other models**.
+> It is cheap with Logistic Regression, and if the sensitive variables carry a lot of weight it
+> may change which features the MVP keeps.
