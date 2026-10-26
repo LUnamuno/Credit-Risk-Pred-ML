@@ -62,8 +62,14 @@ def test_predict_matches_batch_for_same_applicant(client, applicant):
     single = client.post("/predict", json=applicant).json()
     batch = client.post("/predict/batch", json={"applicants": [applicant, applicant]}).json()
     assert len(batch["predictions"]) == 2
-    assert batch["predictions"][0] == single
-    assert batch["predictions"][1] == single
+    for prediction in batch["predictions"]:
+        # Floating-point sums can differ in the last digit depending on batch size (BLAS), so
+        # compare the probability with a tolerance and everything else exactly.
+        assert prediction["probability_of_default"] == pytest.approx(
+            single["probability_of_default"], abs=1e-12
+        )
+        assert prediction["decision"] == single["decision"]
+        assert prediction["threshold"] == single["threshold"]
 
 
 def test_predict_accepts_undocumented_education_code(client, applicant):
